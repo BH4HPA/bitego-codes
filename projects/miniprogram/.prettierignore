@@ -1,0 +1,9 @@
+dist
+node_modules
+.temp
+.cache
+coverage
+pnpm-lock.yaml
+npm-debug.log*
+yarn-error.log*
+.DS_Store

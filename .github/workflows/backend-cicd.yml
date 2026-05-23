@@ -1,0 +1,160 @@
+name: Backend CI/CD
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "projects/backend/**"
+      - "!projects/backend/README.md"
+      - "ci/build-backend-image.sh"
+      - "ci/push-backend-image.sh"
+      - "ci/deploy-backend.sh"
+      - "docker-compose.yml"
+      - ".github/workflows/backend-cicd.yml"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Docker image tag to build/push/deploy (default: short sha)"
+        required: false
+        type: string
+      deploy:
+        description: "Deploy via SSH after pushing image"
+        required: false
+        default: true
+        type: boolean
+
+concurrency:
+  group: backend-cicd-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build_push_deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    environment:
+      name: backend
+      url: https://api.bitego.net/health
+    env:
+      QCLOUD_DOCKER_SERVER: ${{ secrets.QCLOUD_DOCKER_SERVER }}
+      QCLOUD_DOCKER_USERNAME: ${{ secrets.QCLOUD_DOCKER_USERNAME }}
+      QCLOUD_DOCKER_PASSWORD: ${{ secrets.QCLOUD_DOCKER_PASSWORD }}
+      QCLOUD_DOCKER_REPOSITORY: ${{ secrets.QCLOUD_DOCKER_REPOSITORY }}
+      DOCKER_PLATFORM: ${{ vars.DOCKER_PLATFORM }}
+      DEPLOY_SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
+      DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
+      DEPLOY_SSH_USER: ${{ secrets.DEPLOY_SSH_USER }}
+      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+      DEPLOY_WORKDIR: ${{ secrets.DEPLOY_WORKDIR }}
+      TAG_INPUT: ${{ github.event.inputs.tag }}
+      DEPLOY_INPUT: ${{ github.event.inputs.deploy }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+
+      - name: Enable Corepack (Yarn)
+        shell: bash
+        run: |
+          set -euo pipefail
+          corepack enable
+          corepack prepare yarn@4.13.0 --activate
+          yarn --version
+
+      - name: Cache Yarn (Berry)
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.yarn/berry/cache
+          key: yarn-berry-${{ runner.os }}-backend-${{ hashFiles('projects/backend/yarn.lock') }}
+          restore-keys: |
+            yarn-berry-${{ runner.os }}-backend-
+            yarn-berry-${{ runner.os }}-
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd projects/backend
+          yarn install --immutable
+
+      - name: Validate migrations naming
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd projects/backend
+          yarn check:migrations
+
+      - name: Lint & Test (coverage)
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd projects/backend
+          yarn lint
+          yarn format:check
+          yarn test:coverage
+
+      - name: Compute tag
+        id: tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "${TAG_INPUT:-}" ]]; then
+            echo "value=${TAG_INPUT}" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=${GITHUB_SHA:0:7}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build backend image
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash ci/build-backend-image.sh "${{ steps.tag.outputs.value }}"
+
+      - name: Push backend image
+        shell: bash
+        run: |
+          set -euo pipefail
+          PUSH_LATEST=true bash ci/push-backend-image.sh "${{ steps.tag.outputs.value }}"
+
+      - name: Setup SSH key
+        if: ${{ github.event_name == 'push' || env.DEPLOY_INPUT == 'true' }}
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
+
+      - name: Deploy via SSH
+        if: ${{ github.event_name == 'push' || env.DEPLOY_INPUT == 'true' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${DEPLOY_SSH_HOST:-}" || -z "${DEPLOY_SSH_USER:-}" || -z "${DEPLOY_WORKDIR:-}" ]]; then
+            echo "DEPLOY_SSH_HOST/DEPLOY_SSH_USER/DEPLOY_WORKDIR secrets are required" >&2
+            exit 1
+          fi
+          PORT="${DEPLOY_SSH_PORT:-22}"
+          SSH_OPTS=(-p "$PORT" -o StrictHostKeyChecking=no)
+          ssh "${SSH_OPTS[@]}" "${DEPLOY_SSH_USER}@${DEPLOY_SSH_HOST}" \
+            "cd '${DEPLOY_WORKDIR}' && bash ci/deploy-backend.sh '${{ steps.tag.outputs.value }}'"
+
+      - name: Prune older deployments
+        if: always()
+        continue-on-error: true
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ENV_NAME: backend
+        run: |
+          set -euo pipefail
+          REPO="${{ github.repository }}"
+          ids=$(gh api "repos/${REPO}/deployments?environment=${ENV_NAME}&per_page=100" --jq '.[1:] | .[].id')
+          for id in $ids; do
+            gh api -X POST "repos/${REPO}/deployments/${id}/statuses" \
+              -f state=inactive -f description="Superseded by run ${{ github.run_id }}" >/dev/null
+            gh api -X DELETE "repos/${REPO}/deployments/${id}"
+          done

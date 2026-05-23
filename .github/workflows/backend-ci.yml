@@ -1,0 +1,75 @@
+name: Backend CI
+
+on:
+  pull_request:
+    paths:
+      - "projects/backend/**"
+      - "!projects/backend/README.md"
+      - "docker-compose.yml"
+      - ".github/workflows/backend-ci.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: backend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint_test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+
+      - name: Enable Corepack (Yarn)
+        shell: bash
+        run: |
+          set -euo pipefail
+          corepack enable
+          corepack prepare yarn@4.13.0 --activate
+          yarn --version
+
+      - name: Cache Yarn (Berry)
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.yarn/berry/cache
+          key: yarn-berry-${{ runner.os }}-backend-${{ hashFiles('projects/backend/yarn.lock') }}
+          restore-keys: |
+            yarn-berry-${{ runner.os }}-backend-
+            yarn-berry-${{ runner.os }}-
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd projects/backend
+          yarn install --immutable
+
+      - name: Validate migrations naming
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd projects/backend
+          yarn check:migrations
+
+      - name: Lint
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd projects/backend
+          yarn lint
+          yarn format:check
+
+      - name: Test (coverage)
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd projects/backend
+          yarn test:coverage

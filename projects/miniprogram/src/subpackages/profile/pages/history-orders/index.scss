@@ -1,0 +1,102 @@
+.page-history-orders {
+  padding: 16px;
+  background: #f7f8fa;
+
+  .title {
+    font-size: 32px;
+    font-weight: 600;
+    padding: 8px 4px 12px;
+  }
+
+  .list {
+    height: calc(100vh - 72px);
+  }
+
+  .row {
+    background: #fff;
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+
+  .row-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .row-title {
+    font-size: 28px;
+    font-weight: 600;
+  }
+
+  .row-status {
+    font-size: 24px;
+    color: #646a73;
+  }
+
+  .row-mid {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+  }
+
+  .store-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: #f7f8fa;
+    border-radius: 999px;
+    max-width: 100%;
+  }
+
+  .store-logo {
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    background-color: #e5e6eb;
+    background-size: cover;
+    background-position: center;
+  }
+
+  .store-name {
+    font-size: 24px;
+    color: #1f2329;
+    max-width: 480px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .row-bottom {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .row-meta {
+    font-size: 24px;
+    color: #8f959e;
+  }
+
+  .row-amount {
+    font-size: 28px;
+    font-weight: 600;
+    color: #cf1322;
+  }
+
+  .empty {
+    padding: 40px 0;
+    text-align: center;
+    color: #8f959e;
+  }
+
+  .hint {
+    padding: 16px 0 32px;
+    text-align: center;
+    font-size: 24px;
+    color: #8f959e;
+  }
+}

@@ -1,0 +1,27 @@
+.dbg/
+node_modules/
+docs/reports/
+docs/changes/
+docs/testing/
+debug.md
+.env
+!.env.template
+.yarnrc
+Library/
+.cache/
+.yarn/
+**/.DS_Store
+
+# build artifacts
+dist/
+build/
+out/
+.next/
+.vite/
+.turbo/
+coverage/
+playwright-report/
+test-results/
+
+# logs
+*.log

@@ -1,0 +1,56 @@
+.md-root {
+  font-size: 28px;
+  color: #2b2f36;
+  line-height: 1.6;
+}
+
+.md-root h1,
+.md-root h2,
+.md-root h3 {
+  font-weight: 600;
+  margin: 16px 0 10px;
+}
+
+.md-root p {
+  margin: 10px 0;
+}
+
+.md-root ul,
+.md-root ol {
+  margin: 10px 0 10px 22px;
+}
+
+.md-root li {
+  margin: 6px 0;
+}
+
+.md-root code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  background: #f2f3f5;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 24px;
+}
+
+.md-root pre {
+  background: #f2f3f5;
+  padding: 12px;
+  border-radius: 10px;
+  overflow: auto;
+}
+
+.md-root pre code {
+  background: transparent;
+  padding: 0;
+}
+
+.md-root a {
+  color: #1677ff;
+}
+
+.md-root blockquote {
+  margin: 10px 0;
+  padding: 6px 0 6px 12px;
+  border-left: 4px solid #e5e6eb;
+  color: #646a73;
+}

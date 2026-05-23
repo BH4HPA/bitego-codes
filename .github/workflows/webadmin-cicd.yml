@@ -1,0 +1,138 @@
+name: Web Admin CI/CD
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "projects/web-admin/**"
+      - "!projects/web-admin/README.md"
+      - "ci/deploy-webadmin-to-cos.sh"
+      - ".github/workflows/webadmin-cicd.yml"
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: "Deploy to COS after build"
+        required: false
+        default: true
+        type: boolean
+
+concurrency:
+  group: webadmin-cicd-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    environment:
+      name: web-admin
+      url: https://admin.bitego.net
+    env:
+      QCLOUD_WEBADMIN_COS_BUCKET: ${{ secrets.QCLOUD_WEBADMIN_COS_BUCKET }}
+      QCLOUD_WEBADMIN_COS_REGION: ${{ secrets.QCLOUD_WEBADMIN_COS_REGION }}
+      QCLOUD_WEBADMIN_COS_ENDPOINT: ${{ secrets.QCLOUD_WEBADMIN_COS_ENDPOINT }}
+      QCLOUD_SECRET_ID: ${{ secrets.QCLOUD_SECRET_ID }}
+      QCLOUD_SECRET_KEY: ${{ secrets.QCLOUD_SECRET_KEY }}
+      BACKEND_DOMAIN: ${{ secrets.BACKEND_DOMAIN }}
+      WEBADMIN_DOMAIN: ${{ secrets.WEBADMIN_DOMAIN }}
+      DEPLOY_INPUT: ${{ github.event.inputs.deploy }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Enable Corepack (Yarn)
+        shell: bash
+        run: |
+          set -euo pipefail
+          corepack enable
+          corepack prepare yarn@4.13.0 --activate
+          yarn --version
+
+      - name: Cache Yarn (Berry)
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.yarn/berry/cache
+          key: yarn-berry-${{ runner.os }}-webadmin-${{ hashFiles('projects/web-admin/yarn.lock') }}
+          restore-keys: |
+            yarn-berry-${{ runner.os }}-webadmin-
+            yarn-berry-${{ runner.os }}-
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd projects/web-admin
+          yarn install --immutable
+
+      - name: Lint & Test
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd projects/web-admin
+          yarn lint
+          yarn format:check
+          yarn test
+
+      - name: Compute VITE_API_BASE_URL
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${BACKEND_DOMAIN:-}" ]]; then
+            echo "BACKEND_DOMAIN secret is required" >&2
+            exit 1
+          fi
+          echo "VITE_API_BASE_URL=${BACKEND_DOMAIN%/}/api/v1" >> "$GITHUB_ENV"
+
+      - name: Build
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${VITE_API_BASE_URL:-}" ]]; then
+            echo "VITE_API_BASE_URL is required" >&2
+            exit 1
+          fi
+          cd projects/web-admin
+          yarn build
+
+      - name: Deploy to COS
+        if: ${{ github.event_name == 'push' || env.DEPLOY_INPUT == 'true' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash ci/deploy-webadmin-to-cos.sh
+
+      - name: Purge CDN cache
+        if: ${{ (github.event_name == 'push' || env.DEPLOY_INPUT == 'true') && env.WEBADMIN_DOMAIN != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --user --quiet tccli
+          export PATH="$HOME/.local/bin:$PATH"
+          export TENCENTCLOUD_SECRET_ID="${QCLOUD_SECRET_ID}"
+          export TENCENTCLOUD_SECRET_KEY="${QCLOUD_SECRET_KEY}"
+          PURGE_PATH="${WEBADMIN_DOMAIN%/}/"
+          tccli cdn PurgePathCache --cli-unfold-argument --Paths "${PURGE_PATH}" --FlushType flush
+
+      - name: Prune older deployments
+        if: always()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ENV_NAME: web-admin
+        run: |
+          set -euo pipefail
+          REPO="${{ github.repository }}"
+          ids=$(gh api "repos/${REPO}/deployments?environment=${ENV_NAME}&per_page=100" --jq '.[1:] | .[].id')
+          for id in $ids; do
+            gh api -X POST "repos/${REPO}/deployments/${id}/statuses" \
+              -f state=inactive -f description="Superseded by run ${{ github.run_id }}" >/dev/null
+            gh api -X DELETE "repos/${REPO}/deployments/${id}"
+          done

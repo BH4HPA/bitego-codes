@@ -1,0 +1,142 @@
+.page-index {
+  min-height: calc(100vh - 64px);
+  padding: 32px 24px;
+  background: #f7f8fa;
+
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px;
+  }
+
+  .store-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .store-left {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .store-logo {
+    width: 96px;
+    height: 96px;
+    border-radius: 16px;
+    background: #f2f3f5;
+    background-size: cover;
+    background-position: center;
+  }
+
+  .title {
+    font-size: 36px;
+    font-weight: 600;
+  }
+
+  .meta {
+    margin-top: 12px;
+    font-size: 26px;
+    color: #646a73;
+  }
+
+  .meta-line {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .profile-row {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 12px;
+    background: #f7f8fa;
+  }
+
+  .profile-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 28px;
+    background: #f2f3f5;
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .profile-avatar-text {
+    font-size: 22px;
+    color: #646a73;
+  }
+
+  .profile-name {
+    font-size: 28px;
+    color: #1f2329;
+  }
+
+  .desc {
+    margin-top: 12px;
+    font-size: 28px;
+    color: #646a73;
+  }
+
+  .divider {
+    height: 1px;
+    background: rgb(0 0 0 / 8%);
+    margin: 20px 0;
+  }
+
+  .input {
+    margin-top: 12px;
+    padding: 16px;
+    border-radius: 12px;
+    background: #f2f3f5;
+    font-size: 28px;
+  }
+
+  .primary-btn {
+    margin-top: 20px;
+    background: #1677ff;
+    color: #fff;
+    border-radius: 12px;
+  }
+
+  .secondary-btn {
+    margin-top: 12px;
+    border-radius: 12px;
+  }
+
+  .link-btn {
+    margin-top: 20px;
+    padding: 0;
+    background: transparent;
+    color: #1677ff;
+  }
+
+  .fuck-reviewer {
+    display: inline;
+    color: #1677ff;
+    margin-right: 8px;
+    font-weight: bold;
+  }
+
+  .fuck-reviewer-text {
+    display: inline;
+    color: red;
+    font-weight: bold;
+  }
+
+  .icp {
+    width: 100%;
+    margin-top: 80px;
+    font-size: 26px;
+    color: #646a73;
+    text-align: center;
+    display: block;
+  }
+}

@@ -1,0 +1,140 @@
+name: H5 App CI/CD
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "projects/miniprogram/**"
+      - "!projects/miniprogram/README.md"
+      - "ci/deploy-h5app-to-cos.sh"
+      - ".github/workflows/h5app-cicd.yml"
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: "Deploy to COS after build"
+        required: false
+        default: true
+        type: boolean
+
+concurrency:
+  group: h5app-cicd-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    environment:
+      name: h5
+      url: https://app.bitego.net
+    env:
+      QCLOUD_H5APP_COS_BUCKET: ${{ secrets.QCLOUD_H5APP_COS_BUCKET }}
+      QCLOUD_H5APP_COS_REGION: ${{ secrets.QCLOUD_H5APP_COS_REGION }}
+      QCLOUD_H5APP_COS_ENDPOINT: ${{ secrets.QCLOUD_H5APP_COS_ENDPOINT }}
+      QCLOUD_SECRET_ID: ${{ secrets.QCLOUD_SECRET_ID }}
+      QCLOUD_SECRET_KEY: ${{ secrets.QCLOUD_SECRET_KEY }}
+      BACKEND_DOMAIN: ${{ secrets.BACKEND_DOMAIN }}
+      H5APP_DOMAIN: ${{ secrets.H5APP_DOMAIN }}
+      DEPLOY_INPUT: ${{ github.event.inputs.deploy }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Enable Corepack (Yarn)
+        shell: bash
+        run: |
+          set -euo pipefail
+          corepack enable
+          corepack prepare yarn@4.13.0 --activate
+          yarn --version
+
+      - name: Cache Yarn (Berry)
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.yarn/berry/cache
+          key: yarn-berry-${{ runner.os }}-h5app-${{ hashFiles('projects/miniprogram/yarn.lock') }}
+          restore-keys: |
+            yarn-berry-${{ runner.os }}-h5app-
+            yarn-berry-${{ runner.os }}-
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd projects/miniprogram
+          yarn install --immutable
+
+      - name: Lint & Test
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd projects/miniprogram
+          yarn lint
+          yarn lint:style
+          yarn format:check
+          yarn test
+
+      - name: Compute TARO_APP_API_BASE_URL
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${BACKEND_DOMAIN:-}" ]]; then
+            echo "BACKEND_DOMAIN secret is required" >&2
+            exit 1
+          fi
+          echo "TARO_APP_API_BASE_URL=${BACKEND_DOMAIN%/}/api/v1" >> "$GITHUB_ENV"
+
+      - name: Build H5
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${TARO_APP_API_BASE_URL:-}" ]]; then
+            echo "TARO_APP_API_BASE_URL is required" >&2
+            exit 1
+          fi
+          cd projects/miniprogram
+          yarn build:h5
+
+      - name: Deploy to COS
+        if: ${{ github.event_name == 'push' || env.DEPLOY_INPUT == 'true' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash ci/deploy-h5app-to-cos.sh
+
+      - name: Purge CDN cache
+        if: ${{ (github.event_name == 'push' || env.DEPLOY_INPUT == 'true') && env.H5APP_DOMAIN != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --user --quiet tccli
+          export PATH="$HOME/.local/bin:$PATH"
+          export TENCENTCLOUD_SECRET_ID="${QCLOUD_SECRET_ID}"
+          export TENCENTCLOUD_SECRET_KEY="${QCLOUD_SECRET_KEY}"
+          PURGE_PATH="${H5APP_DOMAIN%/}/"
+          tccli cdn PurgePathCache --cli-unfold-argument --Paths "${PURGE_PATH}" --FlushType flush
+
+      - name: Prune older deployments
+        if: always()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ENV_NAME: h5
+        run: |
+          set -euo pipefail
+          REPO="${{ github.repository }}"
+          ids=$(gh api "repos/${REPO}/deployments?environment=${ENV_NAME}&per_page=100" --jq '.[1:] | .[].id')
+          for id in $ids; do
+            gh api -X POST "repos/${REPO}/deployments/${id}/statuses" \
+              -f state=inactive -f description="Superseded by run ${{ github.run_id }}" >/dev/null
+            gh api -X DELETE "repos/${REPO}/deployments/${id}"
+          done
+

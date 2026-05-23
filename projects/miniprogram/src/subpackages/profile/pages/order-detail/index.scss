@@ -1,0 +1,85 @@
+.page-order-detail {
+  padding: 16px;
+  background: #f7f8fa;
+
+  .title {
+    font-size: 32px;
+    font-weight: 600;
+    padding: 8px 4px 12px;
+  }
+
+  .meta {
+    font-size: 26px;
+    color: #646a73;
+    padding: 4px 4px 0;
+  }
+
+  .meta-link {
+    display: inline;
+    color: #1677ff;
+  }
+
+  .card {
+    margin-top: 12px;
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+  }
+
+  .card-title {
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+
+  .item {
+    padding: 12px;
+    border-radius: 12px;
+    background: #f7f8fa;
+    margin-bottom: 12px;
+  }
+
+  .item-title {
+    font-size: 28px;
+    font-weight: 600;
+  }
+
+  .item-desc {
+    margin-top: 6px;
+    font-size: 24px;
+    color: #646a73;
+  }
+
+  .empty {
+    padding: 28px 0;
+    text-align: center;
+    color: #8f959e;
+  }
+
+  .refund-hint {
+    font-size: 24px;
+    color: #646a73;
+    margin-bottom: 10px;
+  }
+
+  .refund-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .refund-input {
+    width: calc(100% - 32px);
+    padding: 16px;
+    border-radius: 12px;
+    background: #f2f3f5;
+    font-size: 26px;
+  }
+
+  .refund-btn {
+    border-radius: 12px;
+    background: #ff4d4f;
+    color: #fff;
+    width: 100%;
+  }
+}

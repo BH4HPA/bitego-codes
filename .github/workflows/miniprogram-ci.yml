@@ -1,0 +1,88 @@
+name: Miniprogram CI
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "projects/miniprogram/**"
+      - "!projects/miniprogram/README.md"
+      - ".github/workflows/miniprogram-ci.yml"
+  pull_request:
+    paths:
+      - "projects/miniprogram/**"
+      - "!projects/miniprogram/README.md"
+      - ".github/workflows/miniprogram-ci.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: miniprogram-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build_weapp:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+
+      - name: Enable Corepack (Yarn)
+        shell: bash
+        run: |
+          set -euo pipefail
+          corepack enable
+          corepack prepare yarn@4.13.0 --activate
+          yarn --version
+
+      - name: Cache Yarn (Berry)
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.yarn/berry/cache
+          key: yarn-berry-${{ runner.os }}-miniprogram-${{ hashFiles('projects/miniprogram/yarn.lock') }}
+          restore-keys: |
+            yarn-berry-${{ runner.os }}-miniprogram-
+            yarn-berry-${{ runner.os }}-
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd projects/miniprogram
+          yarn install --immutable
+
+      - name: Lint
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd projects/miniprogram
+          yarn lint
+          yarn lint:style
+          yarn format:check
+
+      - name: Test
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd projects/miniprogram
+          yarn test
+
+      - name: Build weapp
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd projects/miniprogram
+          yarn build:weapp
+
+      - name: Build h5
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd projects/miniprogram
+          yarn build:h5

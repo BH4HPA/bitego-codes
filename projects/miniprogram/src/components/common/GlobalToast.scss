@@ -1,0 +1,38 @@
+.gt-root {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(170px + env(safe-area-inset-bottom));
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.gt-bubble {
+  max-width: calc(100vw - 48px);
+  padding: 14px 18px;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 72%);
+  color: #fff;
+  font-size: 26px;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transform: translateY(10px);
+  opacity: 0;
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
+}
+
+.gt-open .gt-bubble {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.gt-close .gt-bubble {
+  opacity: 0;
+  transform: translateY(10px);
+}

@@ -1,0 +1,60 @@
+.page-profile-edit {
+  padding: 24px;
+
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 20px;
+  }
+
+  .row {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .avatar-btn {
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .avatar-btn::after {
+    border: 0;
+  }
+
+  .avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 60px;
+    background: #f2f3f5;
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 34px;
+    color: #646a73;
+  }
+
+  .label {
+    font-size: 26px;
+    color: #646a73;
+  }
+
+  .input {
+    width: calc(100% - 32px);
+    padding: 16px;
+    border-radius: 12px;
+    background: #f2f3f5;
+    font-size: 28px;
+  }
+
+  .btn {
+    margin-top: 16px;
+    border-radius: 12px;
+    background: #1677ff;
+    color: #fff;
+    width: 100%;
+  }
+}

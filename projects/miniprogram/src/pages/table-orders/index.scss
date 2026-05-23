@@ -1,0 +1,221 @@
+.page-table-orders {
+  --padding-bottom-val: calc(120px + env(safe-area-inset-bottom));
+
+  min-height: calc(100vh - 24px - var(--padding-bottom-val));
+  padding: 24px;
+  padding-bottom: var(--padding-bottom-val);
+  background: #f7f8fa;
+
+  .title {
+    font-size: 32px;
+    font-weight: 600;
+  }
+
+  .list {
+    margin-top: 16px;
+  }
+
+  .order-card {
+    padding: 16px;
+    border-radius: 12px;
+    background: #fff;
+    margin-top: 12px;
+  }
+
+  .order-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .order-left {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .order-no {
+    font-size: 28px;
+    font-weight: 600;
+  }
+
+  .order-payer {
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .payer-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 16px;
+    background: #f2f3f5;
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .payer-avatar-text {
+    font-size: 18px;
+    color: #646a73;
+  }
+
+  .payer-name {
+    font-size: 22px;
+    color: #8f959e;
+  }
+
+  .order-meta {
+    font-size: 22px;
+    color: #8f959e;
+  }
+
+  .order-status {
+    font-size: 24px;
+    color: #646a73;
+  }
+
+  .order-items {
+    margin-top: 12px;
+  }
+
+  .item-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-top: 1px solid rgb(0 0 0 / 6%);
+  }
+
+  .item-main {
+    flex: 1;
+    padding-right: 12px;
+  }
+
+  .item-name {
+    font-size: 26px;
+    font-weight: 600;
+    color: #1f2329;
+  }
+
+  .item-spec {
+    margin-top: 4px;
+    font-size: 24px;
+    color: #8f959e;
+  }
+
+  .item-by {
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .by-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 16px;
+    background: #f2f3f5;
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .by-avatar-text {
+    font-size: 18px;
+    color: #646a73;
+  }
+
+  .by-name {
+    font-size: 22px;
+    color: #646a73;
+  }
+
+  .item-served {
+    min-width: 72px;
+    text-align: right;
+    font-size: 24px;
+    color: #646a73;
+  }
+
+  .order-foot {
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .order-amount {
+    font-size: 26px;
+    font-weight: 600;
+    color: #cf1322;
+  }
+
+  .order-actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .link-btn {
+    padding: 0;
+    background: transparent;
+    color: #1677ff;
+    border: 0;
+    font-size: 24px;
+  }
+
+  .link-btn::after {
+    border: 0;
+  }
+
+  .empty {
+    margin-top: 20px;
+    color: #8f959e;
+    font-size: 28px;
+  }
+
+  .bottom-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 12px 24px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+    background: #fff;
+    border-top: 1px solid rgb(0 0 0 / 8%);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .bottom-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .bottom-qty {
+    font-size: 24px;
+    color: #646a73;
+  }
+
+  .bottom-total {
+    font-size: 28px;
+    font-weight: 600;
+    color: #cf1322;
+  }
+
+  .bottom-btn {
+    border-radius: 12px;
+    background: #1677ff;
+    color: #fff;
+    min-width: 200px;
+    flex: 1;
+  }
+}
